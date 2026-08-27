@@ -274,7 +274,7 @@
   <script>
     // CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (JSONBin.io)
     const JSONBIN_BIN_ID = '6a8c40a7f5f4af5e293c1919';
-    const JSONBIN_API_KEY = '$2a$10$WSu2W/vYWRQ4A.NiLwhu4eigyo4c5ukYMyGz/vBaqHpcwwrJoNM4e';
+    const JSONBIN_MASTER_KEY = '$2a$10$oozFSlEFkacYuzRbLpFgROQrC5YKMK11lxM0ZqaYTS7oV2Jn1Egje';
 
     lucide.createIcons();
 
@@ -297,7 +297,7 @@
       try {
         const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
           headers: { 
-            'X-Access-Key': JSONBIN_API_KEY 
+            'X-Master-Key': JSONBIN_MASTER_KEY 
           }
         });
 
@@ -341,7 +341,7 @@
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'X-Access-Key': JSONBIN_API_KEY
+            'X-Master-Key': JSONBIN_MASTER_KEY
           },
           body: JSON.stringify(payload)
         });
