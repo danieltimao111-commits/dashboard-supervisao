@@ -272,9 +272,8 @@
   </div>
 
   <script>
-    // CONFIGURAÇÃO DO BANCO DE DADOS EM NUVEM (JSONBin.io)
-    const JSONBIN_BIN_ID = '6a8c40a7f5f4af5e293c1919';
-    const JSONBIN_MASTER_KEY = '$2a$10$oozFSlEFkacYuzRbLpFgROQrC5YKMK11lxM0ZqaYTS7oV2Jn1Egje';
+    // ENDPOINT EXCLUSIVO PARA O PAINEL DE SUPERVISÃO
+    const CLOUD_ENDPOINT = 'https://api.myjson.online/v1/records/88b7e28b-b651-483d-9d41-477bf0e41b21';
 
     lucide.createIcons();
 
@@ -295,23 +294,20 @@
       statusEl.innerText = "☁️ Sincronizando dados com a nuvem...";
 
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-          headers: { 
-            'X-Master-Key': JSONBIN_MASTER_KEY 
-          }
-        });
-
-        if (!response.ok) throw new Error('Falha ao conectar com o banco de dados.');
+        const response = await fetch(CLOUD_ENDPOINT);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const result = await response.json();
-        if (result.record && result.record.viagens) {
-          globalViagens = result.record.viagens || [];
-          globalActions = result.record.actions || [];
+        const dataRecord = result.data || result;
+
+        if (dataRecord && (dataRecord.viagens || dataRecord.actions)) {
+          globalViagens = dataRecord.viagens || [];
+          globalActions = dataRecord.actions || [];
           
           initDataProcessing();
           applyGlobalFilters();
 
-          const dataAtualizacao = result.record.updatedAt ? new Date(result.record.updatedAt).toLocaleString('pt-BR') : 'recente';
+          const dataAtualizacao = dataRecord.updatedAt ? new Date(dataRecord.updatedAt).toLocaleString('pt-BR') : 'recente';
           statusEl.className = "bg-emerald-600 text-white text-xs py-1 px-4 text-center font-medium";
           statusEl.innerText = `✓ Dados sincronizados com a nuvem (Última atualização: ${dataAtualizacao})`;
         } else {
@@ -321,7 +317,7 @@
       } catch (err) {
         console.error(err);
         statusEl.className = "bg-rose-600 text-white text-xs py-1 px-4 text-center font-medium";
-        statusEl.innerText = "❌ Erro ao carregar dados da nuvem. Verifique a conexão.";
+        statusEl.innerText = `❌ Erro ao carregar dados da nuvem (${err.message}).`;
       }
     }
 
@@ -332,21 +328,20 @@
 
       try {
         const payload = {
-          viagens: globalViagens,
-          actions: globalActions,
-          updatedAt: new Date().toISOString()
+          data: {
+            viagens: globalViagens,
+            actions: globalActions,
+            updatedAt: new Date().toISOString()
+          }
         };
 
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        const response = await fetch(CLOUD_ENDPOINT, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_MASTER_KEY
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Erro ao salvar na nuvem.');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         statusEl.className = "bg-emerald-600 text-white text-xs py-1 px-4 text-center font-medium";
         statusEl.innerText = "✓ Planilha salva na nuvem com sucesso! O gestor já pode visualizar as alterações pelo link.";
@@ -354,8 +349,8 @@
       } catch (err) {
         console.error(err);
         statusEl.className = "bg-rose-600 text-white text-xs py-1 px-4 text-center font-medium";
-        statusEl.innerText = "❌ Erro ao enviar atualização para a nuvem.";
-        alert('Não foi possível salvar na nuvem. Verifique suas chaves do JSONBin.');
+        statusEl.innerText = `❌ Erro ao enviar atualização (${err.message}).`;
+        alert(`Não foi possível salvar na nuvem (${err.message}).`);
       }
     }
 
